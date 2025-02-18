@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
+	"id": "obsidian-mcp",
+	"name": "Obsidian MCP Client",
+	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Obsidian MCP Client is an assistant that can use various LLM APIs to provide the best Chat experience and implement productivity tools through the MCP protocol.",
+	"author": "lperichon",
+	"authorUrl": "https://luisperichon.dev.ar",
+	"fundingUrl": "https://luisperichon.dev.ar",
 	"isDesktopOnly": false
 }

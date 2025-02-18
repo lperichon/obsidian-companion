@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "obsidian-mcp",
+	"version": "0.0.1",
+	"description": "Obsidian MCP Client is an assistant that can use various LLM APIs to provide the best Chat experience and implement productivity tools through the MCP protocol.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
