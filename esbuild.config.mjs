@@ -31,7 +31,9 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtins],
+		...builtins,
+		'node:child_process'
+	],
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",
@@ -39,6 +41,7 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	platform: 'node',
 });
 
 if (prod) {

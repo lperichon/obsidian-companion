@@ -1,9 +1,9 @@
 {
-	"id": "obsidian-mcp",
-	"name": "Obsidian MCP Client",
+	"id": "obsidian-companion",
+	"name": "Obsidian Companion",
 	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Obsidian MCP Client is an assistant that can use various LLM APIs to provide the best Chat experience and implement productivity tools through the MCP protocol.",
+	"description": "Obsidian Companion is an assistant that can use various LLM APIs to provide the best chat experience and implement productivity tools through the MCP protocol.",
 	"author": "lperichon",
 	"authorUrl": "https://luisperichon.dev.ar",
 	"fundingUrl": "https://luisperichon.dev.ar",

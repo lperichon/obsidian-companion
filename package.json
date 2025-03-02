@@ -1,24 +1,38 @@
 {
-	"name": "obsidian-mcp",
+	"name": "obsidian-companion",
 	"version": "0.0.1",
-	"description": "Obsidian MCP Client is an assistant that can use various LLM APIs to provide the best Chat experience and implement productivity tools through the MCP protocol.",
+	"description": "Obsidian Companion is an assistant that can use various LLM APIs to provide the best chat experience and implement productivity tools through the MCP protocol.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"test": "tsx test.ts"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^16.11.6",
+		"@types/node": "^22.10.5",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4"
-	}
+		"tsx": "^4.19.3",
+		"typescript": "^5.7.2"
+	},
+	"dependencies": {
+		"@h1deya/langchain-mcp-tools": "^0.1.13",
+		"@langchain/anthropic": "^0.3.13",
+		"@langchain/core": "^0.3.40",
+		"@langchain/google-genai": "^0.1.8",
+		"@langchain/langgraph": "^0.2.48",
+		"@langchain/ollama": "^0.2.0",
+		"@langchain/openai": "^0.4.4",
+		"ts-node": "^10.9.2",
+		"zod": "^3.24.2"
+	},
+	"type": "module"
 }
