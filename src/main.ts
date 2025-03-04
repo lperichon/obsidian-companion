@@ -1,6 +1,7 @@
 import { McpServersConfig } from '@h1deya/langchain-mcp-tools';
 
-import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
+import { CompanionView, VIEW_TYPE_COMPANION } from './views/companion.js';
 import Agent from './utils/agent.js';
 
 interface PluginSettings {
@@ -23,13 +24,15 @@ export default class CompanionPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+		// Custom views need to be registered when the plugin is enabled
+		this.registerView(
+			VIEW_TYPE_COMPANION,
+			(leaf) => new CompanionView(leaf)
+		);
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', async (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			const query = 'List the files in my vault';
-			const response = await this.agent.processQuery(query);
-			new Notice(response);
+		this.addRibbonIcon('dice', 'Activate Obsidian Companion', () => {
+			this.activateView();
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -37,7 +40,7 @@ export default class CompanionPlugin extends Plugin {
 
 		// TODO: Get servers from settings
 		const localRestApiKey = this.settings.localRestApiKey;
-		console.log(this)
+
 		const mcpServers: McpServersConfig = {
 			"obsidian-mcp-tools": {
 				"command": "/Users/luisperichon/Workspace/obsidian-mcp/.obsidian/plugins/mcp-tools/bin/mcp-server",
@@ -65,6 +68,28 @@ export default class CompanionPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	async activateView() {
+		const { workspace } = this.app;
+	
+		let leaf: WorkspaceLeaf | null = null;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_COMPANION);
+	
+		if (leaves.length > 0) {
+		  // A leaf with our view already exists, use that
+		  leaf = leaves[0];
+		} else {
+		  // Our view could not be found in the workspace, create a new leaf
+		  // in the right sidebar for it
+		  leaf = workspace.getRightLeaf(false);
+		  await leaf?.setViewState({ type: VIEW_TYPE_COMPANION, active: true });
+		}
+	
+		// "Reveal" the leaf in case it is in a collapsed sidebar
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+		}
+	  }
 }
 
 class MainSettingTab extends PluginSettingTab {
