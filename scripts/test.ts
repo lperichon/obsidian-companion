@@ -1,4 +1,4 @@
-import Agent from 'agent.js'
+import Agent from '../src/utils/agent.js'
 
 const localRestApiKey='26cfbf339e1ec1e33d3122594a6434e19a8427831e56715ef9d318f590c1815e'; // Enter API Key provided by the Local REST API Obsidian plugin
 

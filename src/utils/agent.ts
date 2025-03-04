@@ -41,18 +41,18 @@ export default class Agent {
             const messages = { messages: [new HumanMessage(query)] };
             const result = await Agent.agent.invoke(messages, {
                 callbacks: [{
-                    handleToolStart: async (tool) => {
+                    handleToolStart: async (tool: any) => {
                         console.log(`Starting tool: ${tool.name}`);
-                        console.log(`Tool input: ${JSON.stringify(tool.input)}`);
+                        console.log(`Tool input: ${JSON.stringify(tool.input, undefined, ' ')}`);
                     },
-                    handleToolEnd: async (output) => {
-                        console.log(`Tool output: ${JSON.stringify(output)}`);
+                    handleToolEnd: async (output: any) => {
+                        console.log(`Tool output: ${JSON.stringify(output, undefined, ' ')}`);
                     },
-                    handleLLMStart: async (llm) => {
+                    handleLLMStart: async (llm: any) => {
                         console.log(`LLM thinking...`);
                     },
-                    handleLLMEnd: async (output) => {
-                        console.log(`LLM response: ${JSON.stringify(output)}`);
+                    handleLLMEnd: async (output: any) => {
+                        console.log(`LLM response: ${JSON.stringify(output, undefined, ' ')}`);
                     }
                 }]
             });

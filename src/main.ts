@@ -1,7 +1,7 @@
 import { McpServersConfig } from '@h1deya/langchain-mcp-tools';
 
 import { App, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import Agent from './agent.js';
+import Agent from './utils/agent.js';
 
 interface PluginSettings {
 	anthropicApiKey: string;
@@ -40,7 +40,7 @@ export default class CompanionPlugin extends Plugin {
 		console.log(this)
 		const mcpServers: McpServersConfig = {
 			"obsidian-mcp-tools": {
-				"command": ".obsidian/plugins/mcp-tools/bin/mcp-server",
+				"command": "/Users/luisperichon/Workspace/obsidian-mcp/.obsidian/plugins/mcp-tools/bin/mcp-server",
 				"args": [],
 				"env": {
 					"OBSIDIAN_API_KEY": localRestApiKey
@@ -124,4 +124,4 @@ class MainSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 	}
-}
+} 
