@@ -27,7 +27,7 @@ export default class CompanionPlugin extends Plugin {
 		// Custom views need to be registered when the plugin is enabled
 		this.registerView(
 			VIEW_TYPE_COMPANION,
-			(leaf) => new CompanionView(leaf)
+			(leaf) => new CompanionView(leaf, this)
 		);
 
 		// This creates an icon in the left ribbon.
