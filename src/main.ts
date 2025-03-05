@@ -3,19 +3,26 @@ import { McpServersConfig } from '@h1deya/langchain-mcp-tools';
 import { App, Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
 import { CompanionView, VIEW_TYPE_COMPANION } from './views/companion.js';
 import Agent from './utils/agent.js';
+import './styles.css';
 
 interface PluginSettings {
 	anthropicApiKey: string;
 	googleApiKey: string;
 	openaiApiKey: string;
 	localRestApiKey: string;
+	// New settings for conversation history
+	maxConversationLength: number;
+	saveConversationOnClose: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
 	anthropicApiKey: '',
 	googleApiKey: '',
 	openaiApiKey: '',
-	localRestApiKey: ''
+	localRestApiKey: '',
+	// Default values for new settings
+	maxConversationLength: 10,
+	saveConversationOnClose: false
 }
 
 export default class CompanionPlugin extends Plugin {
@@ -53,12 +60,25 @@ export default class CompanionPlugin extends Plugin {
 
 		const llmApiKey = this.settings.openaiApiKey;
 		
+		// Initialize the agent with the max conversation length from settings
 		this.agent = new Agent();
-		await this.agent.initialize(llmApiKey, mcpServers);
+		await this.agent.initialize(llmApiKey, mcpServers, this.settings.maxConversationLength);
+		
+		// Load conversation history if enabled
+		if (this.settings.saveConversationOnClose) {
+			const data = await this.loadData();
+			if (data && data.conversationHistory) {
+				this.agent.loadSerializableHistory(data.conversationHistory);
+			}
+		}
 	}
 
 	onunload() {
-		this.agent?.cleanup()
+		// Save conversation history if enabled
+		if (this.settings.saveConversationOnClose) {
+			this.saveConversationHistory();
+		}
+		this.agent?.cleanup();
 	}
 
 	async loadSettings() {
@@ -67,6 +87,17 @@ export default class CompanionPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+	
+	async saveConversationHistory() {
+		if (this.agent) {
+			const data = await this.loadData();
+			const updatedData = {
+				...data,
+				conversationHistory: this.agent.getSerializableHistory()
+			};
+			await this.saveData(updatedData);
+		}
 	}
 
 	async activateView() {
@@ -146,6 +177,35 @@ class MainSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.localRestApiKey)
 				.onChange(async (value) => {
 					this.plugin.settings.localRestApiKey = value;
+					await this.plugin.saveSettings();
+				}));
+				
+		// Add new settings for conversation history
+		containerEl.createEl('h3', { text: 'Conversation History Settings' });
+		
+		new Setting(containerEl)
+			.setName('Max Conversation Length')
+			.setDesc('Maximum number of messages to keep in conversation history')
+			.addSlider(slider => slider
+				.setLimits(1, 50, 1)
+				.setValue(this.plugin.settings.maxConversationLength)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.maxConversationLength = value;
+					// Update the agent's max conversation length
+					if (this.plugin.agent) {
+						this.plugin.agent.setMaxConversationLength(value);
+					}
+					await this.plugin.saveSettings();
+				}));
+				
+		new Setting(containerEl)
+			.setName('Save Conversation on Close')
+			.setDesc('Save conversation history when closing the plugin')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.saveConversationOnClose)
+				.onChange(async (value) => {
+					this.plugin.settings.saveConversationOnClose = value;
 					await this.plugin.saveSettings();
 				}));
 	}

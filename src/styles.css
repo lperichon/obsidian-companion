@@ -1,0 +1,84 @@
+/* Companion View Styles */
+
+.companion-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.companion-title {
+  margin: 0;
+}
+
+.companion-clear-button {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.companion-input-container {
+  display: flex;
+  margin-bottom: 16px;
+}
+
+.companion-query-input {
+  flex-grow: 1;
+  min-height: 60px;
+  resize: vertical;
+  border-radius: 4px;
+  padding: 8px;
+  margin-right: 8px;
+}
+
+.companion-submit-button {
+  align-self: flex-end;
+}
+
+.companion-chat-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.companion-query-container,
+.companion-response-container,
+.companion-error-container,
+.companion-loading-container {
+  margin-bottom: 16px;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.companion-query-container {
+  background-color: var(--background-secondary);
+}
+
+.companion-response-container {
+  background-color: var(--background-primary-alt);
+}
+
+.companion-error-container {
+  background-color: rgba(255, 0, 0, 0.1);
+}
+
+.companion-loading {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.companion-query-container h5,
+.companion-response-container h5,
+.companion-error-container h5 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.companion-query,
+.companion-response,
+.companion-error {
+  white-space: pre-wrap;
+  word-break: break-word;
+} 

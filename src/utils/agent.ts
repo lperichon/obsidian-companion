@@ -1,5 +1,5 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { HumanMessage } from '@langchain/core/messages';
+import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
@@ -13,9 +13,12 @@ import {
 export default class Agent {
     mcpCleanup: McpServerCleanupFn | undefined;
     private static agent: any;
+    private conversationHistory: Array<HumanMessage | AIMessage> = [];
+    private maxConversationLength: number = 10;
 
-    async initialize(apiKey: string, mcpServers: McpServersConfig) {
+    async initialize(apiKey: string, mcpServers: McpServersConfig, maxConversationLength: number = 10) {
         console.info('Initializing agent')
+        this.maxConversationLength = maxConversationLength;
         try {
             const llm = new ChatOllama({
                 model: 'qwen2.5:7b',
@@ -35,10 +38,29 @@ export default class Agent {
         }
     }
 
+    setMaxConversationLength(length: number) {
+        this.maxConversationLength = length;
+        this.trimConversationHistory();
+    }
+
+    private trimConversationHistory() {
+        if (this.conversationHistory.length > this.maxConversationLength * 2) {
+            const excessMessages = this.conversationHistory.length - (this.maxConversationLength * 2);
+            this.conversationHistory = this.conversationHistory.slice(excessMessages);
+        }
+    }
+
     async processQuery(query: string) {
         try {
             console.info('query:', query);
-            const messages = { messages: [new HumanMessage(query)] };
+            
+            const humanMessage = new HumanMessage(query);
+            this.conversationHistory.push(humanMessage);
+            
+            this.trimConversationHistory();
+            
+            const messages = { messages: this.conversationHistory };
+            
             const result = await Agent.agent.invoke(messages, {
                 callbacks: [{
                     handleToolStart: async (tool: any) => {
@@ -56,7 +78,14 @@ export default class Agent {
                     }
                 }]
             });
-            const response = result.messages[result.messages.length - 1].content;
+            
+            const aiMessage = result.messages[result.messages.length - 1];
+            
+            this.conversationHistory.push(aiMessage);
+            
+            this.trimConversationHistory();
+            
+            const response = aiMessage.content;
             console.info('response:', response);
 
             return response;
@@ -64,6 +93,28 @@ export default class Agent {
             console.error('Error processing query:', error);
             throw error;
         }
+    }
+
+    clearConversationHistory() {
+        this.conversationHistory = [];
+    }
+
+    getSerializableHistory() {
+        return this.conversationHistory.map(msg => ({
+            type: msg._getType(),
+            content: msg.content
+        }));
+    }
+
+    loadSerializableHistory(history: Array<{type: string, content: string}>) {
+        this.conversationHistory = history.map(item => {
+            if (item.type === 'human') {
+                return new HumanMessage(item.content);
+            } else {
+                return new AIMessage(item.content);
+            }
+        });
+        this.trimConversationHistory();
     }
 
     cleanup() {
