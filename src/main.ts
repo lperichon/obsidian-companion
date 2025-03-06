@@ -12,6 +12,7 @@ interface PluginSettings {
 	localRestApiKey: string;
 	// New settings for conversation history
 	saveConversationOnClose: boolean;
+	saveConversationsAsFiles: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -20,7 +21,8 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	openaiApiKey: '',
 	localRestApiKey: '',
 	// Default values for new settings
-	saveConversationOnClose: false
+	saveConversationOnClose: false,
+	saveConversationsAsFiles: false
 }
 
 export default class CompanionPlugin extends Plugin {
@@ -98,6 +100,49 @@ export default class CompanionPlugin extends Plugin {
 				conversationHistory: this.agent.getSerializableHistory()
 			};
 			await this.saveData(updatedData);
+
+			// Save conversation as a file if enabled
+			if (this.settings.saveConversationsAsFiles) {
+				await this.saveConversationAsFile();
+			}
+		}
+	}
+
+	async saveConversationAsFile() {
+		if (!this.agent) return;
+
+		const history = this.agent.getSerializableHistory();
+		if (!history || !history.messages || history.messages.length === 0) return;
+
+		// Create the companion-conversations folder if it doesn't exist
+		const folderPath = 'companion-conversations';
+		if (!this.app.vault.getAbstractFileByPath(folderPath)) {
+			await this.app.vault.createFolder(folderPath);
+		}
+
+		// Generate filename with timestamp
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+		const filename = `${folderPath}/${timestamp}.md`;
+
+		// Convert conversation to markdown
+		let markdown = '# Obsidian Companion Conversation\n\n';
+		markdown += `Date: ${new Date().toLocaleString()}\n\n`;
+		markdown += '---\n\n';
+
+		for (const message of history.messages) {
+			if (message.type === 'human') {
+				markdown += `## You\n${message.content}\n\n`;
+			} else {
+				markdown += `## Companion\n${message.content}\n\n`;
+			}
+		}
+
+		// Create or update the file
+		try {
+			await this.app.vault.create(filename, markdown);
+		} catch (error) {
+			console.error('Error saving conversation to file:', error);
+			new Notice('Failed to save conversation to file');
 		}
 	}
 
@@ -191,6 +236,17 @@ class MainSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.saveConversationOnClose)
 				.onChange(async (value) => {
 					this.plugin.settings.saveConversationOnClose = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Save conversations as files')
+			.setDesc('Save each conversation as a separate note in the vault under companion-conversations folder')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.saveConversationsAsFiles)
+				.onChange(async (value) => {
+					this.plugin.settings.saveConversationsAsFiles = value;
 					await this.plugin.saveSettings();
 				})
 			);
