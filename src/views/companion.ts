@@ -103,9 +103,6 @@ export class CompanionView extends ItemView {
       
       // Display the response
       this.displayResponse(response);
-      
-      // Update max conversation length if needed
-      this.plugin.agent.setMaxConversationLength(this.plugin.settings.maxConversationLength);
     } catch (error) {
       console.error('Error processing query:', error);
       
@@ -160,6 +157,7 @@ export class CompanionView extends ItemView {
   }
 
   async onClose() {
+    console.log('onClose');
     // Save conversation history if enabled
     if (this.plugin.settings.saveConversationOnClose) {
       await this.plugin.saveConversationHistory();

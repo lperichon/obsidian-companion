@@ -11,7 +11,6 @@ interface PluginSettings {
 	openaiApiKey: string;
 	localRestApiKey: string;
 	// New settings for conversation history
-	maxConversationLength: number;
 	saveConversationOnClose: boolean;
 }
 
@@ -21,7 +20,6 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	openaiApiKey: '',
 	localRestApiKey: '',
 	// Default values for new settings
-	maxConversationLength: 10,
 	saveConversationOnClose: false
 }
 
@@ -58,11 +56,11 @@ export default class CompanionPlugin extends Plugin {
 			}
 		};
 
-		const llmApiKey = this.settings.openaiApiKey;
+		let llmApiKey = this.settings.anthropicApiKey || this.settings.googleApiKey || this.settings.openaiApiKey;
 		
-		// Initialize the agent with the max conversation length from settings
+		// Initialize the agent
 		this.agent = new Agent();
-		await this.agent.initialize(llmApiKey, mcpServers, this.settings.maxConversationLength);
+		await this.agent.initialize(llmApiKey, mcpServers);
 		
 		// Load conversation history if enabled
 		if (this.settings.saveConversationOnClose) {
@@ -184,29 +182,14 @@ class MainSettingTab extends PluginSettingTab {
 		containerEl.createEl('h3', { text: 'Conversation History Settings' });
 		
 		new Setting(containerEl)
-			.setName('Max Conversation Length')
-			.setDesc('Maximum number of messages to keep in conversation history')
-			.addSlider(slider => slider
-				.setLimits(1, 50, 1)
-				.setValue(this.plugin.settings.maxConversationLength)
-				.setDynamicTooltip()
-				.onChange(async (value) => {
-					this.plugin.settings.maxConversationLength = value;
-					// Update the agent's max conversation length
-					if (this.plugin.agent) {
-						this.plugin.agent.setMaxConversationLength(value);
-					}
-					await this.plugin.saveSettings();
-				}));
-				
-		new Setting(containerEl)
-			.setName('Save Conversation on Close')
-			.setDesc('Save conversation history when closing the plugin')
+			.setName('Save conversation on close')
+			.setDesc('Save the conversation history when closing Obsidian')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.saveConversationOnClose)
 				.onChange(async (value) => {
 					this.plugin.settings.saveConversationOnClose = value;
 					await this.plugin.saveSettings();
-				}));
+				})
+			);
 	}
 } 

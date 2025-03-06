@@ -14,11 +14,9 @@ export default class Agent {
     mcpCleanup: McpServerCleanupFn | undefined;
     private static agent: any;
     private conversationHistory: Array<HumanMessage | AIMessage> = [];
-    private maxConversationLength: number = 10;
 
-    async initialize(apiKey: string, mcpServers: McpServersConfig, maxConversationLength: number = 10) {
+    async initialize(apiKey: string, mcpServers: McpServersConfig) {
         console.info('Initializing agent')
-        this.maxConversationLength = maxConversationLength;
         try {
             const llm = new ChatOllama({
                 model: 'qwen2.5:7b',
@@ -38,26 +36,12 @@ export default class Agent {
         }
     }
 
-    setMaxConversationLength(length: number) {
-        this.maxConversationLength = length;
-        this.trimConversationHistory();
-    }
-
-    private trimConversationHistory() {
-        if (this.conversationHistory.length > this.maxConversationLength * 2) {
-            const excessMessages = this.conversationHistory.length - (this.maxConversationLength * 2);
-            this.conversationHistory = this.conversationHistory.slice(excessMessages);
-        }
-    }
-
     async processQuery(query: string) {
         try {
             console.info('query:', query);
             
             const humanMessage = new HumanMessage(query);
             this.conversationHistory.push(humanMessage);
-            
-            this.trimConversationHistory();
             
             const messages = { messages: this.conversationHistory };
             
@@ -82,8 +66,6 @@ export default class Agent {
             const aiMessage = result.messages[result.messages.length - 1];
             
             this.conversationHistory.push(aiMessage);
-            
-            this.trimConversationHistory();
             
             const response = aiMessage.content;
             console.info('response:', response);
@@ -114,11 +96,9 @@ export default class Agent {
                 return new AIMessage(item.content);
             }
         });
-        this.trimConversationHistory();
     }
 
     cleanup() {
-        console.info('Cleanup');
         this.mcpCleanup?.();
     }
 }
