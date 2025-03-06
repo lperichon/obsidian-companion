@@ -4,6 +4,7 @@ import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatOllama } from '@langchain/ollama';
+import { MemorySaver } from '@langchain/langgraph';
 import {
     convertMcpToLangchainTools,
     McpServersConfig,
@@ -14,9 +15,16 @@ export default class Agent {
     mcpCleanup: McpServerCleanupFn | undefined;
     private static agent: any;
     private conversationHistory: Array<HumanMessage | AIMessage> = [];
+    private checkpointer: MemorySaver;
+    private threadId: string | undefined;
 
-    async initialize(apiKey: string, mcpServers: McpServersConfig) {
+    constructor() {
+        this.checkpointer = new MemorySaver();
+    }
+
+    async initialize(apiKey: string, mcpServers: McpServersConfig, threadId?: string) {
         console.info('Initializing agent')
+        this.threadId = threadId;
         try {
             const llm = new ChatOllama({
                 model: 'qwen2.5:7b',
@@ -26,9 +34,10 @@ export default class Agent {
             const { tools, cleanup } = await convertMcpToLangchainTools(mcpServers);
             this.mcpCleanup = cleanup;
 
-            Agent.agent = createReactAgent({
+            Agent.agent = await createReactAgent({
                 llm,
-                tools
+                tools,
+                checkpointer: this.checkpointer
             });
         } catch (error) {
             console.error('Failed to initialize agent:', error);
@@ -44,6 +53,7 @@ export default class Agent {
             this.conversationHistory.push(humanMessage);
             
             const messages = { messages: this.conversationHistory };
+            const config = { configurable: { thread_id: this.threadId || 'default' } };
             
             const result = await Agent.agent.invoke(messages, {
                 callbacks: [{
@@ -60,7 +70,8 @@ export default class Agent {
                     handleLLMEnd: async (output: any) => {
                         console.log(`LLM response: ${JSON.stringify(output, undefined, ' ')}`);
                     }
-                }]
+                }],
+                configurable: config.configurable
             });
             
             const aiMessage = result.messages[result.messages.length - 1];
@@ -79,17 +90,23 @@ export default class Agent {
 
     clearConversationHistory() {
         this.conversationHistory = [];
+        // Generate a new thread ID when clearing history
+        this.threadId = crypto.randomUUID();
     }
 
     getSerializableHistory() {
-        return this.conversationHistory.map(msg => ({
-            type: msg._getType(),
-            content: msg.content
-        }));
+        return {
+            messages: this.conversationHistory.map(msg => ({
+                type: msg._getType(),
+                content: msg.content
+            })),
+            threadId: this.threadId
+        };
     }
 
-    loadSerializableHistory(history: Array<{type: string, content: string}>) {
-        this.conversationHistory = history.map(item => {
+    loadSerializableHistory(history: { messages: Array<{type: string, content: string}>, threadId?: string }) {
+        this.threadId = history.threadId || crypto.randomUUID();
+        this.conversationHistory = history.messages.map(item => {
             if (item.type === 'human') {
                 return new HumanMessage(item.content);
             } else {

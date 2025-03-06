@@ -60,15 +60,18 @@ export default class CompanionPlugin extends Plugin {
 		
 		// Initialize the agent
 		this.agent = new Agent();
-		await this.agent.initialize(llmApiKey, mcpServers);
 		
 		// Load conversation history if enabled
+		let threadId;
 		if (this.settings.saveConversationOnClose) {
 			const data = await this.loadData();
 			if (data && data.conversationHistory) {
 				this.agent.loadSerializableHistory(data.conversationHistory);
+				threadId = data.conversationHistory.threadId;
 			}
 		}
+		
+		await this.agent.initialize(llmApiKey, mcpServers, threadId);
 	}
 
 	onunload() {

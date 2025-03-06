@@ -145,14 +145,14 @@ export class CompanionView extends ItemView {
   // Method to display saved conversation
   async displaySavedConversation() {
     const history = this.plugin.agent.getSerializableHistory();
-    if (history && history.length > 0) {
-      for (const message of history) {
-        if (message.type === 'human') {
-          this.displayQuery(message.content);
-        } else {
-          this.displayResponse(message.content);
+    if (history && history.messages && history.messages.length > 0) {
+        for (const message of history.messages) {
+            if (message.type === 'human') {
+                this.displayQuery(message.content);
+            } else {
+                this.displayResponse(message.content);
+            }
         }
-      }
     }
   }
 
