@@ -6,20 +6,18 @@ import Agent from './utils/agent.js';
 import './styles.css';
 
 interface PluginSettings {
-	anthropicApiKey: string;
-	googleApiKey: string;
-	openaiApiKey: string;
 	localRestApiKey: string;
+	openRouterApiKey: string;
+	useLlmProvider: string;
 	// New settings for conversation history
 	saveConversationOnClose: boolean;
 	saveConversationsAsFiles: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
-	anthropicApiKey: '',
-	googleApiKey: '',
-	openaiApiKey: '',
 	localRestApiKey: '',
+	openRouterApiKey: '',
+	useLlmProvider: 'local',
 	// Default values for new settings
 	saveConversationOnClose: false,
 	saveConversationsAsFiles: false
@@ -58,7 +56,8 @@ export default class CompanionPlugin extends Plugin {
 			}
 		};
 
-		let llmApiKey = this.settings.anthropicApiKey || this.settings.googleApiKey || this.settings.openaiApiKey;
+		let llmApiKey = this.settings.openRouterApiKey;
+		let llmProvider = this.settings.useLlmProvider;
 		
 		// Initialize the agent
 		this.agent = new Agent();
@@ -73,7 +72,7 @@ export default class CompanionPlugin extends Plugin {
 			}
 		}
 		
-		await this.agent.initialize(llmApiKey, mcpServers, threadId);
+		await this.agent.initialize(llmApiKey, llmProvider, mcpServers, threadId);
 	}
 
 	onunload() {
@@ -182,38 +181,7 @@ class MainSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 		
-		new Setting(containerEl)
-		.setName('OpenAI API Lkey')
-		.setDesc('It\'s a secret')
-		.addText(text => text
-			.setPlaceholder('Enter your secret')
-			.setValue(this.plugin.settings.openaiApiKey)
-			.onChange(async (value) => {
-				this.plugin.settings.openaiApiKey = value;
-				await this.plugin.saveSettings();
-			}));
-
-		new Setting(containerEl)
-			.setName('Anthropic API Lkey')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.anthropicApiKey)
-				.onChange(async (value) => {
-					this.plugin.settings.anthropicApiKey = value;
-					await this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
-			.setName('Google API Lkey')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.googleApiKey)
-				.onChange(async (value) => {
-					this.plugin.settings.googleApiKey = value;
-					await this.plugin.saveSettings();
-				}));
+		containerEl.createEl('h3', { text: 'API Keys' });
 		
 		new Setting(containerEl)
 			.setName('Local REST API KEY')
@@ -225,6 +193,46 @@ class MainSettingTab extends PluginSettingTab {
 					this.plugin.settings.localRestApiKey = value;
 					await this.plugin.saveSettings();
 				}));
+				
+		new Setting(containerEl)
+			.setName('OpenRouter API Key')
+			.setDesc('API key for OpenRouter')
+			.addText(text => text
+				.setPlaceholder('Enter your OpenRouter API key')
+				.setValue(this.plugin.settings.openRouterApiKey)
+				.onChange(async (value) => {
+					this.plugin.settings.openRouterApiKey = value;
+					await this.plugin.saveSettings();
+				}));
+		
+		containerEl.createEl('h3', { text: 'LLM Provider Settings' });
+		
+		new Setting(containerEl)
+			.setName('Default LLM Provider')
+			.setDesc('Choose between local (Ollama) or remote (OpenRouter) LLM')
+			.addDropdown(dropdown => dropdown
+				.addOption('local', 'Local (Ollama)')
+				.addOption('remote', 'Remote (OpenRouter)')
+				.setValue(this.plugin.settings.useLlmProvider)
+				.onChange(async (value) => {
+					this.plugin.settings.useLlmProvider = value;
+					await this.plugin.saveSettings();
+					// Reinitialize the agent with the new provider
+					if (this.plugin.agent) {
+						const llmApiKey = this.plugin.settings.openRouterApiKey;
+						const mcpServers = {
+							"obsidian-mcp-tools": {
+								"command": "/Users/luisperichon/Workspace/obsidian-mcp/.obsidian/plugins/mcp-tools/bin/mcp-server",
+								"args": [],
+								"env": {
+									"OBSIDIAN_API_KEY": this.plugin.settings.localRestApiKey
+								}
+							}
+						};
+						await this.plugin.agent.initialize(llmApiKey, value, mcpServers);
+					}
+				})
+			);
 				
 		// Add new settings for conversation history
 		containerEl.createEl('h3', { text: 'Conversation History Settings' });

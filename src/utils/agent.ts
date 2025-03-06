@@ -1,8 +1,6 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
-import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatOllama } from '@langchain/ollama';
 import { MemorySaver } from '@langchain/langgraph';
 import {
@@ -17,19 +15,49 @@ export default class Agent {
     private conversationHistory: Array<HumanMessage | AIMessage> = [];
     private checkpointer: MemorySaver;
     private threadId: string | undefined;
+    private currentLlmProvider: string = 'local';
 
     constructor() {
         this.checkpointer = new MemorySaver();
     }
 
-    async initialize(apiKey: string, mcpServers: McpServersConfig, threadId?: string) {
-        console.info('Initializing agent')
+    async initialize(apiKey: string, llmProvider: string, mcpServers: McpServersConfig, threadId?: string) {
+        console.info('Initializing agent with provider:', llmProvider)
         this.threadId = threadId;
+        this.currentLlmProvider = llmProvider;
+        
         try {
-            const llm = new ChatOllama({
-                model: 'qwen2.5:7b',
-                temperature: 0
-            })
+            let llm;
+            
+            if (llmProvider === 'local') {
+                // Use Ollama for local LLM
+                llm = new ChatOllama({
+                    model: 'qwen2.5:7b',
+                    temperature: 0
+                });
+            } else {
+                // Use OpenRouter for remote LLM
+                if (!apiKey) {
+                    console.warn('OpenRouter API key not provided, falling back to local LLM');
+                    llm = new ChatOllama({
+                        model: 'qwen2.5:7b',
+                        temperature: 0
+                    });
+                    this.currentLlmProvider = 'local';
+                } else {
+                    llm = new ChatOpenAI({
+                        modelName: 'anthropic/claude-3.7-sonnet:thinking',
+                        apiKey,
+                        configuration: {
+                            baseURL: 'https://openrouter.ai/api/v1',
+                            defaultHeaders: {
+                                'HTTP-Referer': 'https://obsidian.md',
+                                'X-Title': 'Obsidian Companion'
+                            }
+                        }
+                    });
+                }
+            }
 
             const { tools, cleanup } = await convertMcpToLangchainTools(mcpServers);
             this.mcpCleanup = cleanup;
@@ -43,6 +71,21 @@ export default class Agent {
             console.error('Failed to initialize agent:', error);
             throw error;
         }
+    }
+    
+    // Method to switch LLM provider
+    async switchLlmProvider(provider: string, apiKey: string, mcpServers: McpServersConfig) {
+        if (provider === this.currentLlmProvider) {
+            console.info('Already using this provider, no need to switch');
+            return;
+        }
+        
+        await this.initialize(apiKey, provider, mcpServers, this.threadId);
+    }
+    
+    // Method to get current LLM provider
+    getCurrentLlmProvider(): string {
+        return this.currentLlmProvider;
     }
 
     async processQuery(query: string) {

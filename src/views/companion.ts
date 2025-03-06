@@ -35,6 +35,43 @@ export class CompanionView extends ItemView {
       attr: {type: "button"}
     });
     
+    // Add LLM provider toggle
+    const toggleContainer = container.createDiv({ cls: 'companion-toggle-container' });
+    const toggleLabel = toggleContainer.createEl('span', { text: 'LLM Provider: ', cls: 'companion-toggle-label' });
+    
+    // Create toggle button
+    const toggleButton = toggleContainer.createEl('button', {
+      cls: 'companion-toggle-button',
+      attr: { type: 'button' }
+    });
+    
+    // Set initial toggle state based on current provider
+    const currentProvider = this.plugin.agent?.getCurrentLlmProvider() || this.plugin.settings.useLlmProvider;
+    toggleButton.textContent = currentProvider === 'local' ? 'Local (Ollama)' : 'Remote (OpenRouter)';
+    toggleButton.classList.add(currentProvider === 'local' ? 'local-active' : 'remote-active');
+    
+    // Add event listener for toggle button
+    toggleButton.addEventListener('click', async () => {
+      const newProvider = toggleButton.textContent?.includes('Local') ? 'remote' : 'local';
+      toggleButton.textContent = newProvider === 'local' ? 'Local (Ollama)' : 'Remote (OpenRouter)';
+      toggleButton.classList.remove('local-active', 'remote-active');
+      toggleButton.classList.add(newProvider === 'local' ? 'local-active' : 'remote-active');
+      
+      // Switch LLM provider
+      const llmApiKey = this.plugin.settings.openRouterApiKey;
+      const mcpServers = {
+        "obsidian-mcp-tools": {
+          "command": "/Users/luisperichon/Workspace/obsidian-mcp/.obsidian/plugins/mcp-tools/bin/mcp-server",
+          "args": [],
+          "env": {
+            "OBSIDIAN_API_KEY": this.plugin.settings.localRestApiKey
+          }
+        }
+      };
+      
+      await this.plugin.agent.switchLlmProvider(newProvider, llmApiKey, mcpServers);
+    });
+    
     // Create query input field
     const inputContainer = container.createDiv({ cls: 'companion-input-container' });
     this.queryInput = inputContainer.createEl('textarea', {

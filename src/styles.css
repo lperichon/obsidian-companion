@@ -16,6 +16,35 @@
   padding: 4px 8px;
 }
 
+/* LLM Provider Toggle Styles */
+.companion-toggle-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.companion-toggle-label {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+.companion-toggle-button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.companion-toggle-button.local-active {
+  background-color: #4caf50;
+  color: white;
+}
+
+.companion-toggle-button.remote-active {
+  background-color: #2196f3;
+  color: white;
+}
+
 .companion-input-container {
   display: flex;
   margin-bottom: 16px;

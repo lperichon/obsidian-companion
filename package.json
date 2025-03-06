@@ -25,9 +25,7 @@
 	},
 	"dependencies": {
 		"@h1deya/langchain-mcp-tools": "^0.1.13",
-		"@langchain/anthropic": "^0.3.13",
 		"@langchain/core": "^0.3.40",
-		"@langchain/google-genai": "^0.1.8",
 		"@langchain/langgraph": "^0.2.54",
 		"@langchain/ollama": "^0.2.0",
 		"@langchain/openai": "^0.4.4",

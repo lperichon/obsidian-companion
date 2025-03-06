@@ -1,6 +1,6 @@
 import Agent from '../src/utils/agent.js'
 
-const localRestApiKey='26cfbf339e1ec1e33d3122594a6434e19a8427831e56715ef9d318f590c1815e'; // Enter API Key provided by the Local REST API Obsidian plugin
+const localRestApiKey=''; // Enter API Key provided by the Local REST API Obsidian plugin
 
 const mcpServers = {
 	"obsidian-mcp-tools": {
@@ -12,13 +12,13 @@ const mcpServers = {
     }
 };
 
-const apiKey = '';
+const apiKey = ''; // Enter API Key provided by OpenRouter
 
 async function main() {
     let agent = new Agent();
 
     try {
-        await agent.initialize(apiKey, mcpServers);
+        await agent.initialize(apiKey, 'remote', mcpServers);
         const query = 'List the files in my vault';
         await agent.processQuery(query);
     } finally {
